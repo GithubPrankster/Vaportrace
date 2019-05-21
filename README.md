@@ -16,3 +16,7 @@ Currently supported are Spheres, Planes and WIP~ Triangles. In the future Models
 
 # Ok Uneven, now is this faster?
 Haha I don't know. You could help me make it faster though. Or not, maybe buy a threaddestroyer 23000K.
+
+# Credits where its due!
+Some of the libraries from Nothings are used. Syoyo's tinyobjloader is there for when I start working on model stuff.
+I thank some of the people from the Game Dev League discord's #misc-dev for helping me with some stuff. They are cool.
