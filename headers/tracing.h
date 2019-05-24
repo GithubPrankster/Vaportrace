@@ -20,22 +20,24 @@ glm::vec3 clampRay(glm::vec3 col){
 	return res;
 }
 
-glm::vec3 cast_ray(Ray ray, std::vector<Object*> stuff, std::vector<Light> lights, u8 depth = 0) {
-	float numericalMinimum = 1e-4f;
+glm::vec3 cast_ray(Ray ray, std::vector<Object*> stuff, std::vector<Light*> lights, u8 depth = 0) {
+	float numericalMinimum = 1e-3f;
 	glm::vec3 finalColor;
 	hitHistory rayHist;
     if (depth > 8 || !sceneIntersection(ray, stuff, rayHist)) {
         return glm::vec3(0.0f); // Nothing, you dummy.
     }
 
-	for(Light light : lights){
-		glm::vec3 lightDir = light.lightDirection(rayHist.hitPoint);
-		float lightDist = light.lightDistance(rayHist.hitPoint);
+	for(u32 i = 0; i < lights.size(); i++){
+		//rayHist.hitPoint
+		glm::vec3 lightDir, fullIntensity;
+		hitHistory lightHist;
+		lights[i]->illuminate(rayHist.hitPoint, lightDir, fullIntensity, lightHist.dist);
 		
 		Ray shadowRay(glm::dot(lightDir ,rayHist.normal) < 0 ? rayHist.hitPoint - rayHist.normal * numericalMinimum : rayHist.hitPoint + rayHist.normal * numericalMinimum, lightDir);
 		hitHistory shadowHist;
 		
-		if (sceneIntersection(shadowRay, stuff, shadowHist) && glm::length(shadowHist.hitPoint - shadowRay.origin) < lightDist){
+		if (sceneIntersection(shadowRay, stuff, shadowHist) && glm::length(shadowHist.hitPoint - shadowRay.origin) < lightHist.dist){
 			continue;
 		}
 
@@ -43,19 +45,17 @@ glm::vec3 cast_ray(Ray ray, std::vector<Object*> stuff, std::vector<Light> light
 
 		switch(rayHist.obtMat->type){
 			case Standard:{
-				float brightness = light.intensity * std::max(0.f, glm::dot(lightDir, rayHist.normal));
-				finalColor += obtainedColor * light.color * brightness;
+				finalColor += obtainedColor * fullIntensity * std::max(0.f, glm::dot(lightDir, rayHist.normal));
 				break;
 			}
 			case Reflective:{
-				float brightness = light.intensity * std::max(0.f, glm::dot(lightDir, rayHist.normal));
 				glm::vec3 reflect_dir = glm::normalize(glm::reflect(ray.direction, rayHist.normal));
     			glm::vec3 reflect_orig = glm::dot(reflect_dir, rayHist.normal) < 0 ? rayHist.hitPoint - rayHist.normal * numericalMinimum : 
 										rayHist.hitPoint + rayHist.normal * numericalMinimum;
     			glm::vec3 reflect_color = cast_ray(Ray(reflect_orig, reflect_dir), stuff, lights, depth + 1);
 
-				finalColor += (obtainedColor * rayHist.obtMat->reflectiveness )* (reflect_color * rayHist.obtMat->reflectiveness) * light.color 
-							* brightness;
+				finalColor += (obtainedColor * rayHist.obtMat->reflectiveness )* (reflect_color * rayHist.obtMat->reflectiveness) * fullIntensity
+							* std::max(0.f, glm::dot(lightDir, rayHist.normal));
 				break;
 			}
 			default:

@@ -3,7 +3,14 @@
 
 struct Ray{
 	glm::vec3 origin, direction;
-	Ray(glm::vec3 o, glm::vec3 d) : origin(o), direction(d) {}
+	glm::vec3 invDirection;
+	int sign[3];
+	Ray(glm::vec3 o, glm::vec3 d) : origin(o), direction(d) {
+		invDirection = glm::vec3(1.0f) / direction;
+		sign[0] = (invDirection.x < 0); 
+        sign[1] = (invDirection.y < 0); 
+        sign[2] = (invDirection.z < 0); 
+	}
 	Ray() = default;
 };
 
@@ -59,16 +66,35 @@ struct hitHistory{
 };
 
 struct Light{
-	glm::vec3 origin, color;
+	glm::vec3 color;
 	float intensity;
-	Light(glm::vec3 p, glm::vec3 c, float i) : origin(p), color(c), intensity(i) {}
+	Light(glm::vec3 c, float i) : color(c), intensity(i) {}
 	Light() = default;
 
-	glm::vec3 lightDirection(glm::vec3 point){
-		return glm::normalize(origin - point);
-	}
+	virtual void illuminate(glm::vec3 hitPoint, glm::vec3 &lightDirection, glm::vec3 &fullLight, float &lightDistance) = 0;
+};
 
-	float lightDistance(glm::vec3 point){
-		return glm::length(origin - point);
+struct DirectionalLight : Light{
+	glm::vec3 direction;
+	DirectionalLight(glm::vec3 dir, glm::vec3 col, float intense) : direction(dir), Light(col, intense){}
+
+	void illuminate(glm::vec3 hitPoint, glm::vec3 &lightDirection, glm::vec3 &fullLight, float &lightDistance){
+		lightDirection = direction; 
+        fullLight = color * intensity; 
+        lightDistance = std::numeric_limits<float>::max();
+	}
+};
+
+struct PointLight : Light{
+	glm::vec3 pos;
+	PointLight(glm::vec3 p, glm::vec3 col, float intense) : pos(p), Light(col, intense){}
+
+	void illuminate(glm::vec3 hitPoint, glm::vec3 &lightDirection, glm::vec3 &fullLight, float &lightDistance){
+		lightDirection = (hitPoint - pos); 
+        float r2 = glm::length2(lightDirection); 
+        lightDistance = sqrt(r2); 
+        lightDirection.x /= lightDistance, lightDirection.y /= lightDistance, lightDirection.z /= lightDistance; 
+        // avoid division by 0
+        fullLight = color * intensity / (4 * glm::pi<float>() * r2);  
 	}
 };

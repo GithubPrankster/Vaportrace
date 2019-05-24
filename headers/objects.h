@@ -65,6 +65,100 @@ struct Plane : Object{
 	}
 };
 
+struct Disk : Object{
+	glm::vec3 normal;
+	float radius;
+	Disk(glm::vec3 p, glm::vec3 n, float rad,Material mat) : Object(p, mat), radius(rad), normal(n) {}
+	
+
+	bool planeIntersect(Ray ray, float &dist){
+		float denom = glm::dot(normal, ray.direction);
+
+		if(abs(denom) > EPSILION){
+			dist = glm::dot(pos - ray.origin, normal) / denom;
+			return (dist >= EPSILION);
+		}
+		return false;
+	}
+
+	//One thing to note is that you'd need to do a floating point
+	//square root for checking the hit with the disk's radius. 
+	//Instead, an easy optimization is done similar to
+	//what is done with the sphere intersection.
+	bool intersect(Ray ray, float &dist){
+		float radius2 = radius * radius;
+		if (planeIntersect(ray, dist)) { 
+			glm::vec3 p = ray.origin + ray.direction * dist; 
+			glm::vec3 v = p - ray.origin; 
+			float d2 = glm::length(v);
+			return d2 <= radius2; 
+		} 
+ 
+     	return false;
+	}
+	glm::vec3 getNormal(glm::vec3 hitPoint){
+		return normal;
+	}
+};
+/*
+struct AxisBox : Object{
+	glm::vec3 corners[2];
+	AxisBox(glm::vec3 corner, glm::vec3 corner2, Material mat) : Object((corner + corner2) / glm::vec3(2.0f), mat){
+		corners[0] = corner;
+		corners[1] = corner2;
+	}
+	bool intersect(Ray ray, float &dist){
+		float tmin, tmax, tymin, tymax, tzmin, tzmax; 
+ 
+		tmin = (corners[ray.sign[0]].x - ray.origin.x) * ray.invDirection.x; 
+		tmax = (corners[1-ray.sign[0]].x - ray.origin.x) * ray.invDirection.x; 
+		tymin = (corners[ray.sign[1]].y - ray.origin.y) * ray.invDirection.y; 
+		tymax = (corners[1-ray.sign[1]].y - ray.origin.y) * ray.invDirection.y; 
+	
+		if ((tmin > tymax) || (tymin > tmax)) 
+			return false; 
+		if (tymin > tmin) 
+			tmin = tymin; 
+		if (tymax < tmax) 
+			tmax = tymax; 
+	
+		tzmin = (corners[ray.sign[2]].z - ray.origin.z) * ray.invDirection.z; 
+		tzmax = (corners[1-ray.sign[2]].z - ray.origin.z) * ray.invDirection.z; 
+	
+		if ((tmin > tzmax) || (tzmin > tmax)) 
+			return false; 
+		if (tzmin > tmin) 
+			tmin = tzmin; 
+		if (tzmax < tmax) 
+			tmax = tzmax; 
+
+		dist = tmin;
+		return true; 
+	}
+
+	float sign(float num){
+		return (0.0f < num) - (num < 0.0f);
+	}
+
+	//Thanks to Ystem for helping with this!
+	//(seriously i could not find this anywhere.)
+	glm::vec3 getNormal(glm::vec3 hitPoint){
+		glm::vec3 size = (corners[1] - corners[0]);
+		glm::vec3 diff = hitPoint - pos;
+		glm::vec3 vec = glm::vec3(diff.x * size.y * size.z, diff.y * size.x * size.z, diff.z * size.x * size.y);
+
+		glm::vec3 normal;
+		if (abs(vec.x) > abs(vec.y) && abs(vec.x) > abs(vec.z)) {
+			normal = glm::vec3(sign(vec.x), 0, 0);
+		} else if(abs(vec.y) > abs(vec.z)) {
+			normal = glm::vec3(0, sign(vec.y), 0);
+		} else {
+			normal = glm::vec3(0, 0, sign(vec.z));
+		}
+		return normal;
+	}
+};
+*/
 struct Triangle : Object{
 	glm::vec3 vertex1, vertex2, vertex3;
 	Triangle(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, Material mat) : Object(glm::vec3(0.0f), mat), vertex1(p1), vertex2(p2), vertex3(p3) {}
