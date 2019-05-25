@@ -9,7 +9,7 @@ Feel free to change the options! They follow the structure of:
 
 *vaportrace filename + .extension extension renderWidth renderHeight colorChannels(standard 3) renderSamples(usually 4)*
 
-![shot](https://cdn.discordapp.com/attachments/524077514306355210/580201217993736232/render.png)
+![shot](https://cdn.discordapp.com/attachments/103875996138102784/581841321002795028/render.png)
 
 # Objects you can render
 Currently supported are Spheres, Planes and WIP~ Triangles. In the future Models will be supported in .obj format.
