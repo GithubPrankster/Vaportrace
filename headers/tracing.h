@@ -43,7 +43,9 @@ glm::vec3 cast_ray(Ray ray, std::vector<Object*> stuff, std::vector<Light*> ligh
 
 					glm::vec3 obtainedColor = rayHist.obtMat->diffuse->returnColor(0.0f, 0.0f, rayHist.hitPoint);
 					float brightness = lights[i]->intensity * std::max(0.f, glm::dot(lightDir, rayHist.normal));
-					finalColor += obtainedColor * lights[i]->color * brightness;
+					//Hooray for magical float numbers.
+					//"The Actual Lightning Update" will make them only be used in the "Advanced Point Light" structure.
+					finalColor += (obtainedColor * lights[i]->color * brightness) / (1.0f + 0.09f * lightDist + 0.032f * (lightDist * lightDist));
 				}
 				break;
 			}

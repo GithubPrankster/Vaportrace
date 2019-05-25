@@ -36,9 +36,9 @@ std::uniform_int_distribution<int> roulette(0, 1);
 
 int main(int argc, char** argv){
 	std::cout << "V A P O R T R A C E" << std::endl;
-	std::cout << "//// Version 0.96 //" << std::endl;
+	std::cout << "//// Version 0.97 //" << std::endl;
 	std::cout << "Created by Uneven Prankster!" << std::endl;
-	std::cout << std::endl << "Reflecting reflections since April." << std::endl;
+	std::cout << std::endl << "Lights light less than lights before." << std::endl;
 
 	std::vector<Texture*> textures;
 	//textures.push_back(new CheckerTexture(glm::vec3(0.4f, 0.2f, 0.2f), glm::vec3(0.1f), 10));
@@ -54,7 +54,7 @@ int main(int argc, char** argv){
 	mats.push_back(Material(textures[3], 0.0f, Standard));
 	
 	std::vector<Object*> objects;
-	objects.push_back(new Disk(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), 6.0f, mats[1]));
+	objects.push_back(new Plane(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), mats[1]));
 
 	for(int i = 0; i < 50; i++){
 		float sphereSize = disty(ultraRNG);
@@ -62,8 +62,8 @@ int main(int argc, char** argv){
 	}
 	
 	std::vector<Light*> lights;
-    lights.push_back(new Light(glm::vec3(0.6f, 4.0f, 5.0f), glm::vec3(0.9f, 0.2f, 0.3f), 1.0f));
-	lights.push_back(new Light(glm::vec3(4.2f, 4.3f, 2.0f), glm::vec3(1.0f), 1.2f));
+    lights.push_back(new Light(glm::vec3(0.6f, 4.0f, 5.0f), glm::vec3(0.9f, 0.2f, 0.3f), 2.0f));
+	lights.push_back(new Light(glm::vec3(4.2f, 4.3f, 2.0f), glm::vec3(1.0f), 2.4f));
 	
 	Options userOpts(argv[1], argv[2], atoi(argv[3]), atoi(argv[4]), atoi(argv[5]), atoi(argv[6]));
 
