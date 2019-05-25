@@ -8,6 +8,7 @@
 struct Camera{
 	glm::vec3 position, rotationAxis;
 	float rotation, renderFov;
+	glm::vec3 background;
 };
 
 struct Options{
@@ -33,43 +34,37 @@ void PNGEncode(std::vector<Object*> objects, std::vector<Light*> lights, Options
 	u8* render = new u8[opts.renderWidth * opts.renderHeight * opts.renderChannels];
 	glm::mat3 rotMat = glm::rotate(glm::radians(opts.camMan.rotation), opts.camMan.rotationAxis);
 	
-	std::vector<std::thread> daThreads;
-	
 	auto timeThen = std::chrono::system_clock::now(), timeNow = std::chrono::system_clock::now();
 	float elapsedTime = 0.0f;
-	for(int z = 0; z < std::thread::hardware_concurrency(); z++){
-		daThreads.emplace_back(std::thread([objects, lights, opts, render, rotMat, &timeThen, &timeNow, &elapsedTime](){
-			for(int x = 0; x < opts.renderWidth; x++){
-				for(int y = 0; y < opts.renderHeight; y++){
-					timeNow = std::chrono::system_clock::now();
-					std::chrono::duration<float> deltaChrono = timeNow - timeThen;
-					timeThen = timeNow;
-				   
-					glm::vec3 finalResult;
-					for(int sample = 0; sample < opts.renderSamples; sample++){
-						float sampleX = (x + 0.5f + ((sample < 2) ? -0.25f : 0.25f)); 
-						float sampleY = (y + 0.5f + ((sample >= 2) ? -0.25f : 0.25f));
-						
-						glm::vec3 dir = rotMat * glm::normalize(calculateWin(opts.camMan.renderFov, sampleX, sampleY, opts.renderWidth, opts.renderHeight));
-						Ray currentRay(opts.camMan.position, dir);
-						
-						finalResult += cast_ray(currentRay, objects, lights);
-					}
-					finalResult /= opts.renderSamples;
-					
-					render[opts.renderChannels *(x + y * opts.renderWidth)] = convertVec(finalResult.x);
-					render[opts.renderChannels *(x + y * opts.renderWidth)+ 1] = convertVec(finalResult.y);
-					render[opts.renderChannels *(x + y * opts.renderWidth) + 2] = convertVec(finalResult.z);
-					
-					elapsedTime += deltaChrono.count();
-				}
-			}
-		}));
-	}
 	
-	for(auto& thread: daThreads){
-		thread.join();
+	#pragma omp parallel for
+	for(int x = 0; x < opts.renderWidth; x++){
+		for(int y = 0; y < opts.renderHeight; y++){
+			timeNow = std::chrono::system_clock::now();
+			std::chrono::duration<float> deltaChrono = timeNow - timeThen;
+			timeThen = timeNow;
+			
+			glm::vec3 finalResult;
+			for(int sample = 0; sample < opts.renderSamples; sample++){
+				float sampleX = (x + 0.5f + ((sample < 2) ? -0.25f : 0.25f)); 
+				float sampleY = (y + 0.5f + ((sample >= 2) ? -0.25f : 0.25f));
+				
+				glm::vec3 dir = rotMat * glm::normalize(calculateWin(opts.camMan.renderFov, sampleX, sampleY, opts.renderWidth, opts.renderHeight));
+				Ray currentRay(opts.camMan.position, dir);
+				
+				finalResult += cast_ray(currentRay, objects, lights, opts.camMan.background);
+			}
+			finalResult /= opts.renderSamples;
+			
+			render[opts.renderChannels *(x + y * opts.renderWidth)] = convertVec(finalResult.x);
+			render[opts.renderChannels *(x + y * opts.renderWidth)+ 1] = convertVec(finalResult.y);
+			render[opts.renderChannels *(x + y * opts.renderWidth) + 2] = convertVec(finalResult.z);
+			
+			elapsedTime += deltaChrono.count();
+		}
 	}
+		
+	
 	stbi_write_png(opts.renderName.c_str(), opts.renderWidth, opts.renderHeight, opts.renderChannels, render, 0);
 	delete[] render;
 	std::cout << "Time rendered: " << elapsedTime << std::endl;

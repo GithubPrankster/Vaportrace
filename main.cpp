@@ -36,9 +36,9 @@ std::uniform_int_distribution<int> roulette(0, 1);
 
 int main(int argc, char** argv){
 	std::cout << "V A P O R T R A C E" << std::endl;
-	std::cout << "//// Version 0.97 //" << std::endl;
+	std::cout << "//// Version 0.98 //" << std::endl;
 	std::cout << "Created by Uneven Prankster!" << std::endl;
-	std::cout << std::endl << "Lights light less than lights before." << std::endl;
+	std::cout << std::endl << "Because threading yourself is too hard." << std::endl;
 
 	std::vector<Texture*> textures;
 	//textures.push_back(new CheckerTexture(glm::vec3(0.4f, 0.2f, 0.2f), glm::vec3(0.1f), 10));
@@ -62,8 +62,9 @@ int main(int argc, char** argv){
 	}
 	
 	std::vector<Light*> lights;
-    lights.push_back(new Light(glm::vec3(0.6f, 4.0f, 5.0f), glm::vec3(0.9f, 0.2f, 0.3f), 2.0f));
-	lights.push_back(new Light(glm::vec3(4.2f, 4.3f, 2.0f), glm::vec3(1.0f), 2.4f));
+	//lights.push_back(new SunLight(glm::vec3(-0.2f, -1.0f, -0.3f), glm::vec3(0.7f, 0.7f, 0.0f), 1.0f));
+    lights.push_back(new PointLight(glm::vec3(0.6f, 4.0f, 5.0f), glm::vec3(0.9f, 0.2f, 0.3f), 2.0f));
+	lights.push_back(new PointLight(glm::vec3(4.2f, 4.3f, 2.0f), glm::vec3(0.4, 0.2f, 0.7f), 2.4f));
 	
 	Options userOpts(argv[1], argv[2], atoi(argv[3]), atoi(argv[4]), atoi(argv[5]), atoi(argv[6]));
 
@@ -71,6 +72,7 @@ int main(int argc, char** argv){
 	userOpts.camMan.renderFov = glm::pi<float>() / 4.0f;
 	userOpts.camMan.rotation = -15.0f;
 	userOpts.camMan.rotationAxis = glm::vec3(1.0f, 0.0f, 0.0f);
+	userOpts.camMan.background = glm::vec3(0.4f, 0.4f, 0.8f);
 	
 	PNGEncode(objects, lights, userOpts);
 	

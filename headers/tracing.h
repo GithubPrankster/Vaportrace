@@ -20,12 +20,12 @@ glm::vec3 clampRay(glm::vec3 col){
 	return res;
 }
 
-glm::vec3 cast_ray(Ray ray, std::vector<Object*> stuff, std::vector<Light*> lights, u8 depth = 0) {
+glm::vec3 cast_ray(Ray ray, std::vector<Object*> stuff, std::vector<Light*> lights, glm::vec3 background, u8 depth = 0) {
 	float numericalMinimum = 1e-4f;
 	glm::vec3 finalColor;
 	hitHistory rayHist;
     if (depth > 8 || !sceneIntersection(ray, stuff, rayHist)) {
-        return glm::vec3(0.0f); // Nothing, you dummy.
+        return background; // Nothing, you dummy.
     }
 
 	switch(rayHist.obtMat->type){
@@ -45,7 +45,7 @@ glm::vec3 cast_ray(Ray ray, std::vector<Object*> stuff, std::vector<Light*> ligh
 					float brightness = lights[i]->intensity * std::max(0.f, glm::dot(lightDir, rayHist.normal));
 					//Hooray for magical float numbers.
 					//"The Actual Lightning Update" will make them only be used in the "Advanced Point Light" structure.
-					finalColor += (obtainedColor * lights[i]->color * brightness) / (1.0f + 0.09f * lightDist + 0.032f * (lightDist * lightDist));
+					finalColor += (obtainedColor * lights[i]->color * brightness) / lights[i]->attenuation(lightDist);
 				}
 				break;
 			}
@@ -53,7 +53,7 @@ glm::vec3 cast_ray(Ray ray, std::vector<Object*> stuff, std::vector<Light*> ligh
 				glm::vec3 reflect_dir = glm::normalize(glm::reflect(ray.direction, rayHist.normal));
     			glm::vec3 reflect_orig = glm::dot(reflect_dir, rayHist.normal) < 0 ? rayHist.hitPoint - rayHist.normal * numericalMinimum : 
 										rayHist.hitPoint + rayHist.normal * numericalMinimum;
-    			glm::vec3 reflect_color = cast_ray(Ray(reflect_orig, reflect_dir), stuff, lights, depth + 1);
+    			glm::vec3 reflect_color = cast_ray(Ray(reflect_orig, reflect_dir), stuff, lights, background, depth + 1);
 
 				finalColor += (reflect_color * rayHist.obtMat->reflectiveness);
 				break;

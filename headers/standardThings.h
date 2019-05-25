@@ -59,11 +59,19 @@ struct hitHistory{
 };
 
 struct Light{
-	glm::vec3 origin, color;
+	glm::vec3 color;
 	float intensity;
-	Light(glm::vec3 p, glm::vec3 c, float i) : origin(p), color(c), intensity(i) {}
-	Light() = default;
+	Light(glm::vec3 c, float i) : color(c), intensity(i) {}
+	virtual ~Light() = default;
 
+	virtual glm::vec3 lightDirection(glm::vec3 point) = 0;
+	virtual float lightDistance(glm::vec3 point) = 0;
+	virtual float attenuation(float distance) = 0;
+};
+
+struct PointLight : Light{
+	glm::vec3 origin;
+	PointLight(glm::vec3 p, glm::vec3 c, float i) : origin(p), Light(c, i) {}
 	glm::vec3 lightDirection(glm::vec3 point){
 		return glm::normalize(origin - point);
 	}
@@ -71,4 +79,25 @@ struct Light{
 	float lightDistance(glm::vec3 point){
 		return glm::length(origin - point);
 	}
+	float attenuation(float distance){
+		return (1.0f + 0.09f * distance + 0.032f * (distance * distance));
+	}
 };
+
+/*
+struct SunLight : Light{
+	glm::vec3 direction;
+	SunLight(glm::vec3 d, glm::vec3 c, float i) : direction(d), Light(c, i) {}
+	glm::vec3 lightDirection(glm::vec3 point){
+		return direction;
+	}
+
+	float lightDistance(glm::vec3 point){
+		return std::numeric_limits<float>::max();
+	}
+
+	float attenuation(float distance){
+		return 1.0f;
+	}
+};
+*/
