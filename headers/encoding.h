@@ -29,7 +29,7 @@ glm::vec3 calculateWin(float fov, float x, float y, u16 w, u16 h){
 	return glm::vec3(i, j, -1);
 }
 
-void PNGEncode(std::vector<Object*> objects, std::vector<Light> lights, Options opts){
+void PNGEncode(std::vector<Object*> objects, std::vector<Light*> lights, Options opts){
 	u8* render = new u8[opts.renderWidth * opts.renderHeight * opts.renderChannels];
 	glm::mat3 rotMat = glm::rotate(glm::radians(opts.camMan.rotation), opts.camMan.rotationAxis);
 	

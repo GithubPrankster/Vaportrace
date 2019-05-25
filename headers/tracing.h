@@ -20,7 +20,7 @@ glm::vec3 clampRay(glm::vec3 col){
 	return res;
 }
 
-glm::vec3 cast_ray(Ray ray, std::vector<Object*> stuff, std::vector<Light> lights, u8 depth = 0) {
+glm::vec3 cast_ray(Ray ray, std::vector<Object*> stuff, std::vector<Light*> lights, u8 depth = 0) {
 	float numericalMinimum = 1e-4f;
 	glm::vec3 finalColor;
 	hitHistory rayHist;
@@ -28,40 +28,37 @@ glm::vec3 cast_ray(Ray ray, std::vector<Object*> stuff, std::vector<Light> light
         return glm::vec3(0.0f); // Nothing, you dummy.
     }
 
-	for(Light light : lights){
-		glm::vec3 lightDir = light.lightDirection(rayHist.hitPoint);
-		float lightDist = light.lightDistance(rayHist.hitPoint);
-		
-		Ray shadowRay(glm::dot(lightDir ,rayHist.normal) < 0 ? rayHist.hitPoint - rayHist.normal * numericalMinimum : rayHist.hitPoint + rayHist.normal * numericalMinimum, lightDir);
-		hitHistory shadowHist;
-		
-		if (sceneIntersection(shadowRay, stuff, shadowHist) && glm::length(shadowHist.hitPoint - shadowRay.origin) < lightDist){
-			continue;
-		}
-
-		glm::vec3 obtainedColor = rayHist.obtMat->diffuse->returnColor(0.0f, 0.0f, rayHist.hitPoint);
-
-		switch(rayHist.obtMat->type){
+	switch(rayHist.obtMat->type){
 			case Standard:{
-				float brightness = light.intensity * std::max(0.f, glm::dot(lightDir, rayHist.normal));
-				finalColor += obtainedColor * light.color * brightness;
+				for(u32 i = 0; i < lights.size(); i++){
+					glm::vec3 lightDir = lights[i]->lightDirection(rayHist.hitPoint);
+					float lightDist = lights[i]->lightDistance(rayHist.hitPoint);
+					
+					Ray shadowRay(glm::dot(lightDir ,rayHist.normal) < 0 ? rayHist.hitPoint - rayHist.normal * numericalMinimum : rayHist.hitPoint + rayHist.normal * numericalMinimum, lightDir);
+					hitHistory shadowHist;
+					
+					if (sceneIntersection(shadowRay, stuff, shadowHist) && glm::length(shadowHist.hitPoint - shadowRay.origin) < lightDist){
+						continue;
+					}
+
+					glm::vec3 obtainedColor = rayHist.obtMat->diffuse->returnColor(0.0f, 0.0f, rayHist.hitPoint);
+					float brightness = lights[i]->intensity * std::max(0.f, glm::dot(lightDir, rayHist.normal));
+					finalColor += obtainedColor * lights[i]->color * brightness;
+				}
 				break;
 			}
 			case Reflective:{
-				float brightness = light.intensity * std::max(0.f, glm::dot(lightDir, rayHist.normal));
 				glm::vec3 reflect_dir = glm::normalize(glm::reflect(ray.direction, rayHist.normal));
     			glm::vec3 reflect_orig = glm::dot(reflect_dir, rayHist.normal) < 0 ? rayHist.hitPoint - rayHist.normal * numericalMinimum : 
 										rayHist.hitPoint + rayHist.normal * numericalMinimum;
     			glm::vec3 reflect_color = cast_ray(Ray(reflect_orig, reflect_dir), stuff, lights, depth + 1);
 
-				finalColor += (obtainedColor * rayHist.obtMat->reflectiveness )* (reflect_color * rayHist.obtMat->reflectiveness) * light.color 
-							* brightness;
+				finalColor += (reflect_color * rayHist.obtMat->reflectiveness);
 				break;
 			}
 			default:
 				break;
-		}
-		
 	}
+
 	return clampRay(finalColor);
 }

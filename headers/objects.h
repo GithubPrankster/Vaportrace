@@ -65,6 +65,42 @@ struct Plane : Object{
 	}
 };
 
+struct Disk : Object{
+	glm::vec3 normal;
+	float radius;
+	Disk(glm::vec3 p, glm::vec3 n, float rad,Material mat) : Object(p, mat), radius(rad), normal(n) {}
+	
+
+	bool planeIntersect(Ray ray, float &dist){
+		float denom = glm::dot(normal, ray.direction);
+
+		if(abs(denom) > EPSILION){
+			dist = glm::dot(pos - ray.origin, normal) / denom;
+			return (dist >= EPSILION);
+		}
+		return false;
+	}
+
+	//One thing to note is that you'd need to do a floating point
+	//square root for checking the hit with the disk's radius. 
+	//Instead, an easy optimization is done similar to
+	//what is done with the sphere intersection.
+	bool intersect(Ray ray, float &dist){
+		float radius2 = radius * radius;
+		if (planeIntersect(ray, dist)) { 
+			glm::vec3 p = ray.origin + ray.direction * dist; 
+			glm::vec3 v = p - ray.origin; 
+			float d2 = glm::length(v);
+			return d2 <= radius2; 
+		} 
+ 
+     	return false;
+	}
+	glm::vec3 getNormal(glm::vec3 hitPoint){
+		return normal;
+	}
+};
+
 struct Triangle : Object{
 	glm::vec3 vertex1, vertex2, vertex3;
 	Triangle(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, Material mat) : Object(glm::vec3(0.0f), mat), vertex1(p1), vertex2(p2), vertex3(p3) {}
