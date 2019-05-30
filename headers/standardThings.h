@@ -1,16 +1,11 @@
 #define STB_PERLIN_IMPLEMENTATION
 #include "stb_perlin.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 struct Ray{
 	glm::vec3 origin, direction;
-	glm::vec3 invDirection;
-	int sign[3];
-	Ray(glm::vec3 o, glm::vec3 d) : origin(o), direction(d) {
-		invDirection = glm::vec3(1.0f) / direction;
-		sign[0] = (invDirection.x < 0); 
-        sign[1] = (invDirection.y < 0); 
-        sign[2] = (invDirection.z < 0); 
-	}
+	Ray(glm::vec3 o, glm::vec3 d) : origin(o), direction(d) {}
 	Ray() = default;
 };
 
@@ -49,6 +44,23 @@ struct PerlinTexture : Texture{
 	}
 };
 
+struct ImageTexture : Texture{
+	u8* imageData;
+	int imageWidth, imageHeight, imageDepth;
+	ImageTexture(std::string imagePath){
+		imageData = stbi_load(imagePath.c_str(), &imageWidth, &imageHeight, &imageDepth, 0);
+	}
+	glm::vec3 returnColor(float u, float v, glm::vec3 point){
+		int i = (int)fabs((float)imageWidth * (v - ((int)v)));
+		int j = (int)fabs((float)imageHeight * (u - ((int)u)));
+
+		float R = imageData[imageDepth *(i + j * imageWidth)] / 255.0;
+		float G = imageData[imageDepth *(i + j * imageWidth) + 1] / 255.0;
+		float B = imageData[imageDepth *(i + j * imageWidth) + 2] / 255.0;
+		return glm::vec3(R, G, B);
+	}
+};
+
 struct Material{
 	Texture *diffuse;
 	float reflectiveness;
@@ -60,6 +72,7 @@ struct Material{
 struct hitHistory{
 	float dist;
 	glm::vec3 hitPoint, normal;
+	glm::vec2 UV;
 	Material *obtMat;
 	hitHistory(float d, glm::vec3 hP, glm::vec3 n, Material &oM) : dist(d), hitPoint(hP), normal(n), obtMat(&oM) {}
 	hitHistory() = default;
@@ -69,32 +82,42 @@ struct Light{
 	glm::vec3 color;
 	float intensity;
 	Light(glm::vec3 c, float i) : color(c), intensity(i) {}
-	Light() = default;
+	virtual ~Light() = default;
 
-	virtual void illuminate(glm::vec3 hitPoint, glm::vec3 &lightDirection, glm::vec3 &fullLight, float &lightDistance) = 0;
-};
-
-struct DirectionalLight : Light{
-	glm::vec3 direction;
-	DirectionalLight(glm::vec3 dir, glm::vec3 col, float intense) : direction(dir), Light(col, intense){}
-
-	void illuminate(glm::vec3 hitPoint, glm::vec3 &lightDirection, glm::vec3 &fullLight, float &lightDistance){
-		lightDirection = direction; 
-        fullLight = color * intensity; 
-        lightDistance = std::numeric_limits<float>::max();
-	}
+	virtual glm::vec3 lightDirection(glm::vec3 point) = 0;
+	virtual float lightDistance(glm::vec3 point) = 0;
+	virtual float attenuation(float distance) = 0;
 };
 
 struct PointLight : Light{
-	glm::vec3 pos;
-	PointLight(glm::vec3 p, glm::vec3 col, float intense) : pos(p), Light(col, intense){}
+	glm::vec3 origin;
+	PointLight(glm::vec3 p, glm::vec3 c, float i) : origin(p), Light(c, i) {}
+	glm::vec3 lightDirection(glm::vec3 point){
+		return glm::normalize(origin - point);
+	}
 
-	void illuminate(glm::vec3 hitPoint, glm::vec3 &lightDirection, glm::vec3 &fullLight, float &lightDistance){
-		lightDirection = (hitPoint - pos); 
-        float r2 = glm::length2(lightDirection); 
-        lightDistance = sqrt(r2); 
-        lightDirection.x /= lightDistance, lightDirection.y /= lightDistance, lightDirection.z /= lightDistance; 
-        // avoid division by 0
-        fullLight = color * intensity / (4 * glm::pi<float>() * r2);  
+	float lightDistance(glm::vec3 point){
+		return glm::length(origin - point);
+	}
+	float attenuation(float distance){
+		return (1.0f + 0.09f * distance + 0.032f * (distance * distance));
 	}
 };
+
+/*
+struct SunLight : Light{
+	glm::vec3 direction;
+	SunLight(glm::vec3 d, glm::vec3 c, float i) : direction(d), Light(c, i) {}
+	glm::vec3 lightDirection(glm::vec3 point){
+		return direction;
+	}
+
+	float lightDistance(glm::vec3 point){
+		return std::numeric_limits<float>::max();
+	}
+
+	float attenuation(float distance){
+		return 1.0f;
+	}
+};
+*/

@@ -17,7 +17,6 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtc/constants.hpp>
-#include <glm/gtx/norm.hpp>
 
 typedef uint8_t u8;
 typedef uint16_t u16;
@@ -30,52 +29,73 @@ std::uniform_real_distribution<float> disty(0.0f, 1.0f);
 std::uniform_real_distribution<float> distx(-5.0f, 5.0f);
 std::uniform_real_distribution<float> distz(-5.0f, 5.0f);
 std::uniform_int_distribution<int> distMat(0, 3);
-//std::uniform_int_distribution<int> roulette(0, 1);
+std::uniform_int_distribution<int> roulette(0, 1);
 
 #include "headers/objects.h"
 #include "headers/encoding.h"
+#include "headers/INIReader.h"
 
 int main(int argc, char** argv){
 	std::cout << "V A P O R T R A C E" << std::endl;
-	std::cout << "//// Version 0.96 //" << std::endl;
+	std::cout << "//// Version 0.985 //" << std::endl;
 	std::cout << "Created by Uneven Prankster!" << std::endl;
-	std::cout << std::endl << "There are disks. Hard to tell if they are floppy though." << std::endl;
+	std::cout << std::endl << "Options! Get some here!" << std::endl;
 
 	std::vector<Texture*> textures;
 	//textures.push_back(new CheckerTexture(glm::vec3(0.4f, 0.2f, 0.2f), glm::vec3(0.1f), 10));
 	textures.push_back(new PerlinTexture(3.0f, 0.6f, 5));
-	textures.push_back(new PerlinTexture(2.8f, 0.4f, 9));
+	textures.push_back(new ImageTexture("stdfloor.png"));
 	textures.push_back(new SolidTexture(glm::vec3(0.1f, 0.6f, 0.1f)));
 	textures.push_back(new SolidTexture(glm::vec3(0.1f, 0.2f, 0.7f)));
 	
 	std::vector<Material> mats;
 	mats.push_back(Material(textures[0], 0.95f, Standard));
 	mats.push_back(Material(textures[1], 0.0f, Standard));
-	mats.push_back(Material(textures[2], 0.0f, Standard));
+	mats.push_back(Material(textures[2], 0.7f, Reflective));
 	mats.push_back(Material(textures[3], 0.0f, Standard));
 	
 	std::vector<Object*> objects;
-	objects.push_back(new Disk(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), 6.0f, mats[1]));
-	//objects.push_back(new AxisBox(glm::vec3(-1.0f), glm::vec3(1.0f), mats[0]));
-	
+	objects.push_back(new Plane(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), mats[1]));
+
 	for(int i = 0; i < 50; i++){
 		float sphereSize = disty(ultraRNG);
 		objects.push_back(new Sphere(glm::vec3(distx(ultraRNG), sphereSize, distz(ultraRNG)), sphereSize, mats[distMat(ultraRNG)]));
 	}
-
-	//objects.push_back(new Triangle(glm::vec3(0.5f, 0.0f, 0.0f), glm::vec3(0.0f, 0.5f, 0.0f), glm::vec3(-0.5f, 0.0f, 0.0f), mats[3]));
-	//To remind your brain of what an object be push like
 	
 	std::vector<Light*> lights;
-    lights.push_back(new DirectionalLight(glm::vec3(-0.3f), glm::vec3(0.9f, 0.5f, 0.6f), 1.0f));
-	//lights.push_back(new PointLight(glm::vec3(4.2f, 4.3f, 2.0f), glm::vec3(0.4, 0.2, 0.8), 1.2f));
-	
-	Options userOpts(argv[1], argv[2], atoi(argv[3]), atoi(argv[4]), atoi(argv[5]), atoi(argv[6]));
+	//lights.push_back(new SunLight(glm::vec3(-0.2f, -1.0f, -0.3f), glm::vec3(0.7f, 0.7f, 0.0f), 1.0f));
+    lights.push_back(new PointLight(glm::vec3(0.6f, 4.0f, 5.0f), glm::vec3(0.9f, 0.2f, 0.3f), 2.0f));
+	lights.push_back(new PointLight(glm::vec3(4.2f, 4.3f, 2.0f), glm::vec3(0.4, 0.2f, 0.7f), 2.4f));
 
-	userOpts.camMan.position = glm::vec3(0.0f, 2.5f, 12.0f);
-	userOpts.camMan.renderFov = glm::pi<float>() / 4.0f;
-	userOpts.camMan.rotation = -15.0f;
-	userOpts.camMan.rotationAxis = glm::vec3(1.0f, 0.0f, 0.0f);
+	INIReader reader("options.ini");
+
+    if (reader.ParseError() < 0) {
+        std::cout << "Can't load ini stuff!" << std::endl;
+        return EXIT_FAILURE;
+    }
+	std::string rName = reader.Get("MainSettings", "Name", "ERMAC.png");
+	std::string Encode = reader.Get("MainSettings", "Encoding", "png");
+
+	u16 rWidth = reader.GetInteger("MainSettings", "RenderWidth", 1280);
+	u16 rHeight = reader.GetInteger("MainSettings", "RenderHeight", 720);
+
+	u8 rChannels = reader.GetInteger("MainSettings", "Channels", 3);
+	u8 rSamples = reader.GetInteger("MainSettings", "Samples", 4);
+	
+	Options userOpts(rName, Encode, rWidth, rHeight, rChannels, rSamples);
+
+	userOpts.camMan.position = glm::vec3(reader.GetReal("Camera", "PositionX", 0.0f), 
+							   reader.GetReal("Camera", "PositionY", 0.0f), 
+							   reader.GetReal("Camera", "PositionZ", 0.0f));
+
+	userOpts.camMan.renderFov = glm::radians(reader.GetReal("Camera", "FOV", 90.0f));
+	userOpts.camMan.rotation = reader.GetReal("Camera", "Rotation", 0.0f);
+
+	userOpts.camMan.rotationAxis = glm::vec3(reader.GetReal("Camera", "RotationAxisX", 0.0f), 
+							   reader.GetReal("Camera", "RotationAxisY", 0.0f), 
+							   reader.GetReal("Camera", "RotationAxisZ", 0.0f));
+
+	userOpts.camMan.background = glm::vec3(0.0f);
 	
 	PNGEncode(objects, lights, userOpts);
 	

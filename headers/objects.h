@@ -12,7 +12,7 @@ struct Object{
 	Object() = default;
 	virtual bool intersect(Ray ray, float &dist) = 0;
 	virtual glm::vec3 getNormal(glm::vec3 hitPoint) = 0;
-	//virtual glm::vec2 getUV(glm::vec3 hitPoint);
+	virtual glm::vec2 getUV(glm::vec3 hitPoint);
 };
 
 struct Sphere : Object{
@@ -44,8 +44,23 @@ struct Sphere : Object{
 		return glm::normalize(hitPoint - pos);
 	}
 
-	void returnUV();
+	glm::vec2 getUV(glm::vec3 hitPoint){
+		return glm::vec2(glm::atan(hitPoint.x, hitPoint.z) / (2.0f * glm::pi<float>()) + 0.5f, 
+						 glm::asin(hitPoint.y) / glm::pi<float>() + 0.5f); 
+	};
 };
+
+glm::vec3 computePrimaryTexDir(glm::vec3 normal)
+{
+    glm::vec3 a = glm::cross(normal, glm::vec3(1, 0, 0));
+    glm::vec3 b = glm::cross(normal, glm::vec3(0, 1, 0));
+
+    glm::vec3 max_ab = glm::dot(a, a) < glm::dot(b, b) ? b : a;
+
+    glm::vec3 c = glm::cross(normal, glm::vec3(0, 0, 1));
+
+    return glm::normalize(glm::dot(max_ab, max_ab) < glm::dot(c, c) ? c : max_ab);
+}
 
 struct Plane : Object{
 	glm::vec3 normal;
@@ -60,9 +75,17 @@ struct Plane : Object{
 		}
 		return false;
 	}
+
 	glm::vec3 getNormal(glm::vec3 hitPoint){
 		return normal;
 	}
+
+	glm::vec2 getUV(glm::vec3 hitPoint){
+		float u = 0.5 + hitPoint.x;
+  		float v = 0.5 + hitPoint.z;
+
+		return glm::vec2(u, v);
+	};
 };
 
 struct Disk : Object{
@@ -96,69 +119,19 @@ struct Disk : Object{
  
      	return false;
 	}
+
 	glm::vec3 getNormal(glm::vec3 hitPoint){
 		return normal;
 	}
+
+	glm::vec2 getUV(glm::vec3 hitPoint){
+		glm::vec3 u = glm::normalize(glm::vec3( normal.y, -normal.x, 0));
+		glm::vec3 v = glm::cross(u, normal);
+
+		return glm::vec2(glm::dot(u, hitPoint), glm::dot(v, hitPoint));
+	};
 };
 /*
-struct AxisBox : Object{
-	glm::vec3 corners[2];
-	AxisBox(glm::vec3 corner, glm::vec3 corner2, Material mat) : Object((corner + corner2) / glm::vec3(2.0f), mat){
-		corners[0] = corner;
-		corners[1] = corner2;
-	}
-	bool intersect(Ray ray, float &dist){
-		float tmin, tmax, tymin, tymax, tzmin, tzmax; 
- 
-		tmin = (corners[ray.sign[0]].x - ray.origin.x) * ray.invDirection.x; 
-		tmax = (corners[1-ray.sign[0]].x - ray.origin.x) * ray.invDirection.x; 
-		tymin = (corners[ray.sign[1]].y - ray.origin.y) * ray.invDirection.y; 
-		tymax = (corners[1-ray.sign[1]].y - ray.origin.y) * ray.invDirection.y; 
-	
-		if ((tmin > tymax) || (tymin > tmax)) 
-			return false; 
-		if (tymin > tmin) 
-			tmin = tymin; 
-		if (tymax < tmax) 
-			tmax = tymax; 
-	
-		tzmin = (corners[ray.sign[2]].z - ray.origin.z) * ray.invDirection.z; 
-		tzmax = (corners[1-ray.sign[2]].z - ray.origin.z) * ray.invDirection.z; 
-	
-		if ((tmin > tzmax) || (tzmin > tmax)) 
-			return false; 
-		if (tzmin > tmin) 
-			tmin = tzmin; 
-		if (tzmax < tmax) 
-			tmax = tzmax; 
-
-		dist = tmin;
-		return true; 
-	}
-
-	float sign(float num){
-		return (0.0f < num) - (num < 0.0f);
-	}
-
-	//Thanks to Ystem for helping with this!
-	//(seriously i could not find this anywhere.)
-	glm::vec3 getNormal(glm::vec3 hitPoint){
-		glm::vec3 size = (corners[1] - corners[0]);
-		glm::vec3 diff = hitPoint - pos;
-		glm::vec3 vec = glm::vec3(diff.x * size.y * size.z, diff.y * size.x * size.z, diff.z * size.x * size.y);
-
-		glm::vec3 normal;
-		if (abs(vec.x) > abs(vec.y) && abs(vec.x) > abs(vec.z)) {
-			normal = glm::vec3(sign(vec.x), 0, 0);
-		} else if(abs(vec.y) > abs(vec.z)) {
-			normal = glm::vec3(0, sign(vec.y), 0);
-		} else {
-			normal = glm::vec3(0, 0, sign(vec.z));
-		}
-		return normal;
-	}
-};
-*/
 struct Triangle : Object{
 	glm::vec3 vertex1, vertex2, vertex3;
 	Triangle(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, Material mat) : Object(glm::vec3(0.0f), mat), vertex1(p1), vertex2(p2), vertex3(p3) {}
@@ -197,3 +170,4 @@ struct Triangle : Object{
 		return glm::cross(edge1, edge2);
 	}
 };
+*/
