@@ -6,6 +6,7 @@ bool sceneIntersection(Ray ray, std::vector<Object*> stuff, hitHistory &history)
 			stuff_dist = dist_i;
 			glm::vec3 hitPoint = ray.origin + ray.direction * dist_i;
 			hitHistory gotHist(dist_i, hitPoint, object->getNormal(hitPoint), object->material);
+			gotHist.UV = object->getUV(hitPoint);
 			history = gotHist;
 		}
 	}
@@ -41,10 +42,8 @@ glm::vec3 cast_ray(Ray ray, std::vector<Object*> stuff, std::vector<Light*> ligh
 						continue;
 					}
 
-					glm::vec3 obtainedColor = rayHist.obtMat->diffuse->returnColor(0.0f, 0.0f, rayHist.hitPoint);
+					glm::vec3 obtainedColor = rayHist.obtMat->diffuse->returnColor(rayHist.UV.x, rayHist.UV.y, rayHist.hitPoint);
 					float brightness = lights[i]->intensity * std::max(0.f, glm::dot(lightDir, rayHist.normal));
-					//Hooray for magical float numbers.
-					//"The Actual Lightning Update" will make them only be used in the "Advanced Point Light" structure.
 					finalColor += (obtainedColor * lights[i]->color * brightness) / lights[i]->attenuation(lightDist);
 				}
 				break;

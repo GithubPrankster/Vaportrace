@@ -12,7 +12,7 @@ struct Object{
 	Object() = default;
 	virtual bool intersect(Ray ray, float &dist) = 0;
 	virtual glm::vec3 getNormal(glm::vec3 hitPoint) = 0;
-	//virtual glm::vec2 getUV(glm::vec3 hitPoint);
+	virtual glm::vec2 getUV(glm::vec3 hitPoint);
 };
 
 struct Sphere : Object{
@@ -44,8 +44,23 @@ struct Sphere : Object{
 		return glm::normalize(hitPoint - pos);
 	}
 
-	void returnUV();
+	glm::vec2 getUV(glm::vec3 hitPoint){
+		return glm::vec2(glm::atan(hitPoint.x, hitPoint.z) / (2.0f * glm::pi<float>()) + 0.5f, 
+						 glm::asin(hitPoint.y) / glm::pi<float>() + 0.5f); 
+	};
 };
+
+glm::vec3 computePrimaryTexDir(glm::vec3 normal)
+{
+    glm::vec3 a = glm::cross(normal, glm::vec3(1, 0, 0));
+    glm::vec3 b = glm::cross(normal, glm::vec3(0, 1, 0));
+
+    glm::vec3 max_ab = glm::dot(a, a) < glm::dot(b, b) ? b : a;
+
+    glm::vec3 c = glm::cross(normal, glm::vec3(0, 0, 1));
+
+    return glm::normalize(glm::dot(max_ab, max_ab) < glm::dot(c, c) ? c : max_ab);
+}
 
 struct Plane : Object{
 	glm::vec3 normal;
@@ -60,9 +75,17 @@ struct Plane : Object{
 		}
 		return false;
 	}
+
 	glm::vec3 getNormal(glm::vec3 hitPoint){
 		return normal;
 	}
+
+	glm::vec2 getUV(glm::vec3 hitPoint){
+		float u = 0.5 + hitPoint.x;
+  		float v = 0.5 + hitPoint.z;
+
+		return glm::vec2(u, v);
+	};
 };
 
 struct Disk : Object{
@@ -96,11 +119,19 @@ struct Disk : Object{
  
      	return false;
 	}
+
 	glm::vec3 getNormal(glm::vec3 hitPoint){
 		return normal;
 	}
-};
 
+	glm::vec2 getUV(glm::vec3 hitPoint){
+		glm::vec3 u = glm::normalize(glm::vec3( normal.y, -normal.x, 0));
+		glm::vec3 v = glm::cross(u, normal);
+
+		return glm::vec2(glm::dot(u, hitPoint), glm::dot(v, hitPoint));
+	};
+};
+/*
 struct Triangle : Object{
 	glm::vec3 vertex1, vertex2, vertex3;
 	Triangle(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, Material mat) : Object(glm::vec3(0.0f), mat), vertex1(p1), vertex2(p2), vertex3(p3) {}
@@ -139,3 +170,4 @@ struct Triangle : Object{
 		return glm::cross(edge1, edge2);
 	}
 };
+*/

@@ -1,5 +1,7 @@
 #define STB_PERLIN_IMPLEMENTATION
 #include "stb_perlin.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 struct Ray{
 	glm::vec3 origin, direction;
@@ -42,6 +44,23 @@ struct PerlinTexture : Texture{
 	}
 };
 
+struct ImageTexture : Texture{
+	u8* imageData;
+	int imageWidth, imageHeight, imageDepth;
+	ImageTexture(std::string imagePath){
+		imageData = stbi_load(imagePath.c_str(), &imageWidth, &imageHeight, &imageDepth, 0);
+	}
+	glm::vec3 returnColor(float u, float v, glm::vec3 point){
+		int i = (int)fabs((float)imageWidth * (v - ((int)v)));
+		int j = (int)fabs((float)imageHeight * (u - ((int)u)));
+
+		float R = imageData[imageDepth *(i + j * imageWidth)] / 255.0;
+		float G = imageData[imageDepth *(i + j * imageWidth) + 1] / 255.0;
+		float B = imageData[imageDepth *(i + j * imageWidth) + 2] / 255.0;
+		return glm::vec3(R, G, B);
+	}
+};
+
 struct Material{
 	Texture *diffuse;
 	float reflectiveness;
@@ -53,6 +72,7 @@ struct Material{
 struct hitHistory{
 	float dist;
 	glm::vec3 hitPoint, normal;
+	glm::vec2 UV;
 	Material *obtMat;
 	hitHistory(float d, glm::vec3 hP, glm::vec3 n, Material &oM) : dist(d), hitPoint(hP), normal(n), obtMat(&oM) {}
 	hitHistory() = default;
