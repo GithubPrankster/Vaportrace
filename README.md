@@ -10,10 +10,7 @@ Feel free to change the options.ini file! Make it do all sorts of good stuff. Ea
 ![shot](https://cdn.discordapp.com/attachments/386259864416157697/583780350015045652/render.png)
 
 # Objects you can render
-Currently supported are Spheres, Planes and WIP~ Triangles. In the future Models will be supported in .obj format.
-
-# Ok Uneven, now is this faster?
-Haha I don't know. You could help me make it faster though. Or not, maybe buy a threaddestroyer 23000K.
+Currently supported are Spheres, Planes, Diks and WIP~ Triangles. In the future Models will be supported in .obj format.
 
 # Credits where its due!
 Some of the libraries from Nothings are used. Syoyo's tinyobjloader is there for when I start working on model stuff.
