@@ -5,9 +5,7 @@
 
 Run build.bat, and make sure you have **GLM 0.9.8.5**, a math library used by the raytracer, just in a cozy folder next to the stuff, and use the GCC compiler of course. Make sure it can support c++17 and **OpenMP**. Honestly, you should always have the latest version of the compiler.
 
-Feel free to change the options! They follow the structure of:
-
-*vaportrace filename + .extension extension renderWidth renderHeight colorChannels(standard 3) renderSamples(usually 4)*
+Feel free to change the options.ini file! Make it do all sorts of good stuff. Easy to understand too.
 
 ![shot](https://cdn.discordapp.com/attachments/386259864416157697/583780350015045652/render.png)
 
