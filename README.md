@@ -15,3 +15,7 @@ Currently supported are Spheres, Planes, Diks and WIP~ Triangles. In the future 
 # Credits where its due!
 Some of the libraries from Nothings are used. Syoyo's tinyobjloader is there for when I start working on model stuff.
 I thank some of the people from the Game Dev League discord's #misc-dev for helping me with some stuff. They are cool.
+
+AAP-Splendor128 and SimpleJPC-16 palettes created by Adigun Polack.
+
+Knoll-Yilluoma dithering algorithm created by Bisqwit. Also present is a soft shadow technique he used in a DOS Raytracer video.
