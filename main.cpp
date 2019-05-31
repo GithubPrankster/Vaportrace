@@ -37,9 +37,9 @@ std::uniform_int_distribution<int> roulette(0, 1);
 
 int main(int argc, char** argv){
 	std::cout << "V A P O R T R A C E" << std::endl;
-	std::cout << "//// Version 0.985 //" << std::endl;
+	std::cout << "//// Version 0.995 //" << std::endl;
 	std::cout << "Created by Uneven Prankster!" << std::endl;
-	std::cout << std::endl << "Options! Get some here!" << std::endl;
+	std::cout << std::endl << "Dithering like it's the 90's!" << std::endl;
 
 	std::vector<Texture*> textures;
 	//textures.push_back(new CheckerTexture(glm::vec3(0.4f, 0.2f, 0.2f), glm::vec3(0.1f), 10));
@@ -81,8 +81,16 @@ int main(int argc, char** argv){
 
 	u8 rChannels = reader.GetInteger("MainSettings", "Channels", 3);
 	u8 rSamples = reader.GetInteger("MainSettings", "Samples", 4);
+
+	initShadowSoftness(reader.GetInteger("MainSettings", "ShadowSamples", 4));
 	
 	Options userOpts(rName, Encode, rWidth, rHeight, rChannels, rSamples);
+
+	if(reader.GetBoolean("Palette", "Palettized", false)){
+		userOpts.pal = Palette(reader.Get("Palette", "Path", "goof.gpl"));
+		userOpts.palette = true;
+		userOpts.renderName = "result.png";
+	}
 
 	userOpts.camMan.position = glm::vec3(reader.GetReal("Camera", "PositionX", 0.0f), 
 							   reader.GetReal("Camera", "PositionY", 0.0f), 

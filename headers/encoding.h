@@ -17,6 +17,8 @@ struct Options{
 	u16 renderWidth, renderHeight;
 	u8 renderChannels, renderSamples;
 	Camera camMan;
+	bool palette = false;
+	Palette pal;
 	Options(std::string renderN, std::string encodeT,u16 renderW, u16 renderH, u8 renderC, u8 renderS): renderName(renderN), encodeType(encodeT),renderWidth(renderW), 
 	renderHeight(renderH), renderChannels(renderC), renderSamples(renderS){}
 };
@@ -65,8 +67,14 @@ void PNGEncode(std::vector<Object*> objects, std::vector<Light*> lights, Options
 		}
 	}
 		
-	
-	stbi_write_png(opts.renderName.c_str(), opts.renderWidth, opts.renderHeight, opts.renderChannels, render, 0);
+	if(!opts.palette){
+		stbi_write_png(opts.renderName.c_str(), opts.renderWidth, opts.renderHeight, opts.renderChannels, render, 0);
+		std::cout << "Time rendered: " << elapsedTime << std::endl;
+	}
+	else{
+		writeRenderPalettized(opts.pal, render, opts.renderWidth, opts.renderHeight, opts.renderChannels);
+		std::cout << "Oh. It was palettized too. Enjoy!" << std::endl;
+		std::cout << "Time rendered: " << elapsedTime << std::endl;
+	}
 	delete[] render;
-	std::cout << "Time rendered: " << elapsedTime << std::endl;
 }

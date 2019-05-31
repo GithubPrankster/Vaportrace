@@ -47,9 +47,11 @@ struct PerlinTexture : Texture{
 struct ImageTexture : Texture{
 	u8* imageData;
 	int imageWidth, imageHeight, imageDepth;
+	
 	ImageTexture(std::string imagePath){
 		imageData = stbi_load(imagePath.c_str(), &imageWidth, &imageHeight, &imageDepth, 0);
 	}
+
 	glm::vec3 returnColor(float u, float v, glm::vec3 point){
 		int i = (int)fabs((float)imageWidth * (v - ((int)v)));
 		int j = (int)fabs((float)imageHeight * (u - ((int)u)));
@@ -84,20 +86,20 @@ struct Light{
 	Light(glm::vec3 c, float i) : color(c), intensity(i) {}
 	virtual ~Light() = default;
 
-	virtual glm::vec3 lightDirection(glm::vec3 point) = 0;
-	virtual float lightDistance(glm::vec3 point) = 0;
+	virtual glm::vec3 lightDirection(glm::vec3 point, glm::vec3 areaPoint) = 0;
+	virtual float lightDistance(glm::vec3 point, glm::vec3 areaPoint) = 0;
 	virtual float attenuation(float distance) = 0;
 };
 
 struct PointLight : Light{
 	glm::vec3 origin;
 	PointLight(glm::vec3 p, glm::vec3 c, float i) : origin(p), Light(c, i) {}
-	glm::vec3 lightDirection(glm::vec3 point){
-		return glm::normalize(origin - point);
+	glm::vec3 lightDirection(glm::vec3 point, glm::vec3 areaPoint){
+		return glm::normalize((origin + areaPoint) - point);
 	}
 
-	float lightDistance(glm::vec3 point){
-		return glm::length(origin - point);
+	float lightDistance(glm::vec3 point, glm::vec3 areaPoint){
+		return glm::length((origin + areaPoint)- point);
 	}
 	float attenuation(float distance){
 		return (1.0f + 0.09f * distance + 0.032f * (distance * distance));

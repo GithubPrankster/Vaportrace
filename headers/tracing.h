@@ -21,6 +21,17 @@ glm::vec3 clampRay(glm::vec3 col){
 	return res;
 }
 
+//Based off "I wrote a Raytracer for DOS, 16 VGA Colors" video by Bisqwit.
+//I switched the array for a resizable vector. Random generation
+//done by 64bit Mersenne Twister Engine.
+std::vector<glm::vec3> shadowSoft;
+void initShadowSoftness(u8 amount){
+	shadowSoft.resize(amount);
+	for(int i = 0; i < amount; i++){
+		shadowSoft.push_back(glm::vec3(2.0f * (disty(ultraRNG) - 0.5f), 2.0f * (disty(ultraRNG) - 0.5f), 2.0f * (disty(ultraRNG) - 0.5f)));
+	}
+};
+
 glm::vec3 cast_ray(Ray ray, std::vector<Object*> stuff, std::vector<Light*> lights, glm::vec3 background, u8 depth = 0) {
 	float numericalMinimum = 1e-4f;
 	glm::vec3 finalColor;
@@ -32,19 +43,21 @@ glm::vec3 cast_ray(Ray ray, std::vector<Object*> stuff, std::vector<Light*> ligh
 	switch(rayHist.obtMat->type){
 			case Standard:{
 				for(u32 i = 0; i < lights.size(); i++){
-					glm::vec3 lightDir = lights[i]->lightDirection(rayHist.hitPoint);
-					float lightDist = lights[i]->lightDistance(rayHist.hitPoint);
-					
-					Ray shadowRay(glm::dot(lightDir ,rayHist.normal) < 0 ? rayHist.hitPoint - rayHist.normal * numericalMinimum : rayHist.hitPoint + rayHist.normal * numericalMinimum, lightDir);
-					hitHistory shadowHist;
-					
-					if (sceneIntersection(shadowRay, stuff, shadowHist) && glm::length(shadowHist.hitPoint - shadowRay.origin) < lightDist){
-						continue;
-					}
+					for(u8 z = 0; z < shadowSoft.size(); z++){
+						glm::vec3 lightDir = lights[i]->lightDirection(rayHist.hitPoint, shadowSoft[z]);
+						float lightDist = lights[i]->lightDistance(rayHist.hitPoint, shadowSoft[z]);
+						
+						Ray shadowRay(glm::dot(lightDir ,rayHist.normal) < 0 ? rayHist.hitPoint - rayHist.normal * numericalMinimum : rayHist.hitPoint + rayHist.normal * numericalMinimum, lightDir);
+						hitHistory shadowHist;
+						
+						if (sceneIntersection(shadowRay, stuff, shadowHist) && glm::length(shadowHist.hitPoint - shadowRay.origin) < lightDist){
+							continue;
+						}
 
-					glm::vec3 obtainedColor = rayHist.obtMat->diffuse->returnColor(rayHist.UV.x, rayHist.UV.y, rayHist.hitPoint);
-					float brightness = lights[i]->intensity * std::max(0.f, glm::dot(lightDir, rayHist.normal));
-					finalColor += (obtainedColor * lights[i]->color * brightness) / lights[i]->attenuation(lightDist);
+						glm::vec3 obtainedColor = rayHist.obtMat->diffuse->returnColor(rayHist.UV.x, rayHist.UV.y, rayHist.hitPoint);
+						float brightness = lights[i]->intensity * std::max(0.f, glm::dot(lightDir, rayHist.normal) / shadowSoft.size());
+						finalColor += (obtainedColor * lights[i]->color * brightness) / lights[i]->attenuation(lightDist);
+					}
 				}
 				break;
 			}
