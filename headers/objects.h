@@ -50,18 +50,6 @@ struct Sphere : Object{
 	};
 };
 
-glm::vec3 computePrimaryTexDir(glm::vec3 normal)
-{
-    glm::vec3 a = glm::cross(normal, glm::vec3(1, 0, 0));
-    glm::vec3 b = glm::cross(normal, glm::vec3(0, 1, 0));
-
-    glm::vec3 max_ab = glm::dot(a, a) < glm::dot(b, b) ? b : a;
-
-    glm::vec3 c = glm::cross(normal, glm::vec3(0, 0, 1));
-
-    return glm::normalize(glm::dot(max_ab, max_ab) < glm::dot(c, c) ? c : max_ab);
-}
-
 struct Plane : Object{
 	glm::vec3 normal;
 	Plane(glm::vec3 p, glm::vec3 n, Material mat) : Object(p, mat), normal(n) {}
