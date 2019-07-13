@@ -18,4 +18,4 @@ I thank some of the people from the Game Dev League discord's #misc-dev for help
 
 AAP-Splendor128 and SimpleJPC-16 palettes created by Adigun Polack.
 
-Knoll-Yilluoma dithering algorithm created by Bisqwit. Also present is a soft shadow technique he used in a DOS Raytracer video.
+Knoll-Yliluoma dithering algorithm created by Bisqwit. Also present is a soft shadow technique he used in a DOS Raytracer video.
